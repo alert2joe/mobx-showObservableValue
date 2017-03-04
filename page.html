@@ -1,0 +1,111 @@
+<html>
+<body>
+
+
+<script src= "https://cdnjs.cloudflare.com/ajax/libs/mobx/3.1.0/mobx.umd.js"></script>
+<script src= "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
+
+
+<script>
+
+
+var a = mobx.observable([
+  {a:1},'pp',{b:1,c:5},'ooo'
+]);
+
+
+var b = mobx.observable(
+  {num:1,
+    obj:{d:{f:'ppp'}},
+    numF:1,
+    ary:[
+      {i1:9}
+    ],
+    get compt(){
+      return this.a;
+    },
+    act:mobx.action(function(){
+      this.a = 5;
+    })
+
+  }
+);
+
+mobx.autorun('myReact',function(){
+    console.log('myReact');
+    a[1];
+    console.log(a[1]);
+
+});
+mobx.autorun('myReacthaha',function(){
+  console.log('myReacthaha');
+   a[0].a;
+   a[2].c;
+   b.obj
+});
+
+
+function showObservableValue(os,sign,aryKey){
+   
+    if(!os || typeof os.$mobx === 'undefined' || !os.$mobx.values ){
+          return false;
+    }
+    if(!aryKey){
+      aryKey = '';
+    }
+
+    if(!sign){
+      var Newsign = '    ˪ '
+    }else{
+      var Newsign = '   ' +sign;
+    }
+    if(mobx.isObservableObject(os)){
+        $.each(os.$mobx.values,function(k,v){
+          if(typeof v.value == 'undefined' || typeof v.value == 'function'){
+            return true;
+          }
+       
+          var realValue = '';
+          if(!mobx.isObservable(os.k)){
+                 realValue = v.value;
+            }
+            var reactList = [];
+            $.each(v.observers,function(obk,obv){
+                  reactList.push(obv.toString());
+               })
+            console.log(Newsign+'X'+aryKey+'.'+k+' = ' , realValue,reactList);
+            showObservableValue(v.value,Newsign)
+        })
+    }
+    if(mobx.isObservableArray(os)){
+      
+        $.each(os.$mobx.values,function(k1,v1){
+            if(!mobx.isObservable(v1)){
+
+               var reactList = [];
+               $.each(os.$mobx.atom.observers,function(obk,obv){
+                  reactList.push(obv.toString());
+               })
+
+              console.log(Newsign+'X['+k1+'] = ', v1,reactList);
+              return true;
+            }
+
+             showObservableValue(v1,sign,'['+k1+']')
+        })
+    }
+
+
+}
+
+
+//showObservableValue(b);
+showObservableValue(a);
+
+
+</script>
+</body>
+
+</html>
+
