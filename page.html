@@ -11,7 +11,7 @@
 
 var store= {};
 store.a = mobx.observable([
-  {a:1},'pp',{b:1,c:5},'ooo','q',['w','w']
+  {a:1},'pp',{b:1,c:5},'ooo','q',['w','w'],'123'
 ]);
 
 
@@ -87,6 +87,10 @@ mobx.autorun('testaryaryfunc',function(){
 });
 
 
+//
+// return mobx.autorun.apply(this, arguments);
+
+
 
 function storeMap(os,sign,aryKey){
     sign = sign ||'';
@@ -109,7 +113,6 @@ function storeMap(os,sign,aryKey){
                  }else{
                     reactList.push(obv.name+perfix);
                  }
-                
                   //reactList.push(obv.toString().replace(/^Reaction\[(.*)\]/, '$1'));
                })
       return reactList
