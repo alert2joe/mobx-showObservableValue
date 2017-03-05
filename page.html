@@ -9,13 +9,13 @@
 
 <script>
 
-
-var a = mobx.observable([
-  {a:1},'pp',{b:1,c:5},'ooo'
+var store= {};
+store.a = mobx.observable([
+  {a:1},'pp',{b:1,c:5},'ooo','q',['w','w']
 ]);
 
 
-var b = mobx.observable(
+var b1 = mobx.observable(
   {num:1,
     obj:{d:{f:'ppp'}},
     numF:1,
@@ -31,68 +31,171 @@ var b = mobx.observable(
 
   }
 );
+store.b = mobx.observable(
+  {num:1,
+  age:18,
+    ddd:function(a){},
+    get compt(){
+      return this.num;
+    },
+    get getAgewithNum(){
+      return this.compt+this.age;
+    },
+    act:mobx.action(function(){
+      this.a = 5;
+    })
+
+  }
+);
+
+store.c = {
+    c1:mobx.observable(4),
+    c2:mobx.observable({
+      dd:1,
+      ee:7
+    }),
+    c3:999
+}
+
+
+mobx.autorun('myReactKKK',function(){
+    console.log('myReactKKK');
+    store.b.compt;
+    store.c.c1.get();
+});
+
 
 mobx.autorun('myReact',function(){
     console.log('myReact');
-    a[1];
-    console.log(a[1]);
+    store.b.num;
+    store.a[1];
+
 
 });
 mobx.autorun('myReacthaha',function(){
   console.log('myReacthaha');
-   a[0].a;
-   a[2].c;
-   b.obj
+   store.a[0].a;
+   store.a[2].c;
+   store.b.obj
+});
+
+mobx.autorun('testaryaryfunc',function(){
+ console.log('testaryaryfunc')
+   store.a[5][1];
+   store.b.getAgewithNum;
+
 });
 
 
-function showObservableValue(os,sign,aryKey){
-   
+
+function storeMap(os,sign,aryKey){
+    sign = sign ||'';
+
+    var isObservableValue=function(obj){
+        return mobx.isObservable(obj) && typeof obj.$mobx == 'undefined'; 
+    }
+  
+    var getReactionName=function(observers,perfix){
+       perfix = perfix || '';
+       var reactList = [];
+               $.each(observers,function(obk,obv){
+                 var displayValue = obv.name;
+                 
+                 if(mobx.isComputed(obv)){
+                   var shortName = obv.derivation.name.replace(/^.* /g, '');
+                    var subReactionName = getReactionName(obv.observers,' @ '+shortName);
+                    reactList = reactList.concat(subReactionName);
+                    
+                 }else{
+                    reactList.push(obv.name+perfix);
+                 }
+                
+                  //reactList.push(obv.toString().replace(/^Reaction\[(.*)\]/, '$1'));
+               })
+      return reactList
+    }
+
+
+
     if(!os || typeof os.$mobx === 'undefined' || !os.$mobx.values ){
+          if(typeof os === 'object' && !isObservableValue(os)){
+            $.each(os,function(obk,obv){
+              
+              if(isObservableValue(obv)){
+                  var reactList  = getReactionName(obv.observers);
+                   console.debug('      '+obk+' = '+obv.value,reactList);
+                   return true;
+              }
+              console.log(sign+'--['+obk+']---------');
+              //isObservableValue()
+              storeMap(obv,'  ');
+            })
+          }else{
+      
+          }
           return false;
     }
+
     if(!aryKey){
       aryKey = '';
     }
 
     if(!sign){
-      var Newsign = '    ˪ '
+      var Newsign = '    ˪ X'
     }else{
       var Newsign = '   ' +sign;
     }
+
     if(mobx.isObservableObject(os)){
         $.each(os.$mobx.values,function(k,v){
-          if(typeof v.value == 'undefined' || typeof v.value == 'function'){
+          if(typeof v.value == 'undefined' && !mobx.isComputed(v) ){
+           //
             return true;
           }
-       
+
           var realValue = '';
+
           if(!mobx.isObservable(os.k)){
                  realValue = v.value;
-            }
-            var reactList = [];
-            $.each(v.observers,function(obk,obv){
-                  reactList.push(obv.toString());
-               })
-            console.log(Newsign+'X'+aryKey+'.'+k+' = ' , realValue,reactList);
-            showObservableValue(v.value,Newsign)
+          }
+          if(typeof v.value == 'function'){
+            realValue = 'function';
+          }
+          if(mobx.isAction(v.value)){
+            realValue = ' mobx Action';
+          }
+          if(mobx.isComputed(v)){
+            realValue = ' mobx Computed';
+          }
+
+            var reactList  = getReactionName(v.observers);
+            console.debug(Newsign+''+aryKey+'.'+k+' = ' , realValue,reactList);
+        
+              storeMap(v.value,Newsign)
+        
+  
         })
     }
     if(mobx.isObservableArray(os)){
-      
+
         $.each(os.$mobx.values,function(k1,v1){
-            if(!mobx.isObservable(v1)){
-
-               var reactList = [];
-               $.each(os.$mobx.atom.observers,function(obk,obv){
-                  reactList.push(obv.toString());
-               })
-
-              console.log(Newsign+'X['+k1+'] = ', v1,reactList);
-              return true;
+           
+     
+            if(!mobx.isObservable(v1)|| mobx.isObservableArray(v1)){
+               var reactList  = getReactionName(os.$mobx.atom.observers);
+               console.debug(Newsign+'['+k1+'] = ', v1,reactList);
             }
 
-             showObservableValue(v1,sign,'['+k1+']')
+             if(!mobx.isObservable(v1)){
+              return true;
+             }
+             if(mobx.isObservableArray(v1)){
+                sign =  Newsign.replace("X", ""); 
+             }
+
+          
+             storeMap(v1,sign,'['+k1+']');
+             
         })
     }
 
@@ -100,8 +203,8 @@ function showObservableValue(os,sign,aryKey){
 }
 
 
-//showObservableValue(b);
-showObservableValue(a);
+storeMap(store);
+//storeMap(store.a);
 
 
 </script>
